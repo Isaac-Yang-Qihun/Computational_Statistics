@@ -1,0 +1,546 @@
+---
+title: 'Exercises of Chapter 3: Integration and Simulation'
+author: "Qihun Yang"
+date: "2023-03-31"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+week 4
+## Ex 3.2
+The true value of the integral:
+```{r 2.1}
+tr = exp(1)-exp(1)^-1;tr
+```
+1.
+
+* 随机投点法
+
+$\max_{-1\leq x\leq 1}e^x=e$
+that is, $M=e$.
+Then I uniformly sampled N times in the interval $G=[-1,1]\times (0,M)$. Here, let $N=1000$. Using an approximate formula:
+$$\hat{I}=\hat{p} M(b-a)$$
+```{r 2.2}
+set.seed(1)
+n = 10000
+M = exp(1)
+x1 <- runif(n, -1, 1)
+y <- runif(n, 0, M)
+count <- 0
+for (i in 1:n) {
+  if (exp(x1[i]) < y[i]){
+    next
+  }
+  else{
+    count = count + 1
+  }
+}
+## I=
+I1 = (count/n)
+(count/n)*M*(1-(-1))
+```
+* 平均值法
+
+Let $U_i\sim U(-1,1)$ and use the approximate formula:
+$$\tilde{I}=\frac{b-a}{N} \sum_{i=1}^{N} h\left(U_{i}\right)=\frac{b-a}{N} \sum_{i=1}^{N} e^{U_{i}}$$
+```{r 2.3}
+set.seed(1)
+n = 10000
+x2 <- runif(n, -1, 1)
+I2 = (1-(-1))*mean(exp(x2)); I2
+```
+
+2. The approximate 95% confidence interval of $\hat{I}$ is:
+$$\hat{\theta} \pm 2 \frac{S_N}{\sqrt{N}}.$$
+where $\hat{\theta}$ should be $\hat{I}$. In order to guarantee the accuracy of the calculated results to three decimal places at 95% confidence level, we need to solve:
+$$2 \frac{S_N}{\sqrt{N}}<0.0005$$
+Then we get:
+$$N>(4000S_N)^2$$
+
+* 随机投点法
+
+Under the results in (1) when $N=1000$, $S_N=M(b-a)\sqrt{\frac{\hat{p}(1-\hat{p})}{N}}$. So we get:
+```{r 2.4}
+N1 = (4000^2)*(I1*(1-I1))*(M*(1-(-1)))^2;N1
+```
+
+* 平均值法
+
+Under the results in (1) when $N=1000$, $S_N$ can be obtained by:
+$$S_N=\sqrt{\frac{1}{N} \sum_{i=1}^N\left(e^x-\hat{I}\right)^2}$$
+```{r 2.5}
+N2 = (4000^2)*(sum((exp(x2)-tr)^2))/n; N2
+```
+
+3. Let $B=100$,
+```{r B}
+B=100
+```
+$N_1=116102051$ and $N_2=7055924$ to test if the results in 2. are correct.
+
+* 随机投点法
+```{r 2.6}
+n = N1
+I1 <- c()
+for (j in 1:B) {
+  set.seed(j)
+  M = exp(1)
+  x1 <- runif(n, -1, 1)
+  y <- runif(n, 0, M)
+  count <- 0
+  for (i in 1:n) {
+    if (exp(x1[i]) < y[i]){
+      next
+    }
+    else{
+      count = count + 1
+    }
+  }
+  # point estimation of I
+  I1[j] <- (count/n)*M*(1-(-1))
+}
+I1
+# mean of I(B)
+I1B = mean(I1)
+# sd of I
+sd1 <- sd(I1)
+# lower and upper bonds of IB
+l1 = I1B - 0.0005
+u1 = I1B + 0.0005
+# judge whether the point estimation is in the 95% CI and give the ratio of them
+length(I1[I1<=u1 & I1>=l1])/B
+# variance of sampling distribution
+var(I1)
+```
+
+* 平均值法
+```{r 2.7}
+n = N2
+I2 <- c()
+for (j in 1:B) {
+  set.seed(j)
+  x2 <- runif(n, -1, 1)
+  # point estimation of I
+  I2[j] = (1-(-1))*mean(exp(x2))
+}
+I2
+# mean of I(B)
+I2B = mean(I2)
+# sd of I
+sd2 <- sd(I2)
+# lower and upper bonds of IB
+l2 = I2B - 0.0005;l2
+u2 = I2B + 0.0005;u2
+# judge whether the point estimation is in the 95% CI and give the ratio of them
+length(I2[I2<=u2 & I2>=l2])/B
+# variance of sampling distribution
+var(I2)
+```
+According to the numbers of "TRUE" are both less than 5 in the results provided by two methods, I conclude that the specification of $N1$ and $N2$ is correct.
+
+4. 
+```{r 2.8}
+MAE1 <- mean(abs(I1-tr)); MAE1
+MAE2 <- mean(abs(I1-tr)); MAE2
+```
+
+## Ex 3.4
+(2)Define the function $$h(x)=\exp \left(-\frac{1}{2}(x-3)^{2}\right)+\exp \left(-\frac{1}{2}(x-6)^{2}\right)$$
+```{r 3.4.1}
+h <- function(x){
+  return(exp(-0.5*(x-3)^2)+exp(-0.5*(x-6)^2))
+}
+```
+
+Here I need to compute the integral over an infinite interval $(-\infty,\infty)$. Since the pdf of $X$ and $h(x)$ are even function, I can only consider the integral over $(0,\infty)$. By the transformation $x=\frac{1}{t}-1$, the integral interval is altered to $(0,1)$.
+```{r 3.4.2}
+set.seed(1)
+n = 1000
+x <- rnorm(n)
+#estimation
+I = mean(h(x)); I
+#Error bounds at 95% confidence level
+2*sd(h(x))/sqrt(n)
+1.96*sqrt(mean((h(x)-tr)^2))/sqrt(n)
+```
+
+## Ex 3.6
+(1) $E(K)=e$
+(2) 
+```{r 3.6.1}
+set.seed(1)
+n = 100000
+count = 0
+K <- c()
+for (count in 1:n){
+  sum = 0
+  K[count] <- 0
+  while (sum <= 1) {
+    r <- runif(1,0,1)
+    sum = sum + r
+    K[count] = K[count] + 1
+  }
+}
+EK = mean(K); EK
+```
+(3)
+```{r 3.6.2}
+# standard deviation of K
+sdk = sd(K);sdk
+# 95% confidence level CI
+lb=EK-2*sdk/sqrt(n);lb
+up=EK+2*sdk/sqrt(n);up
+```
+95% confidence level CI of $K$ is $[2.712233,2.723307]$, which contains the true value of $e=2.718282$
+
+
+week 5
+
+## Ex 3.2
+The true value of the integral:
+```{r 2.1}
+tr = exp(1)-exp(1)^-1;tr
+```
+( 1 )
+
+* Importance Sampling
+
+To specify the alternative probability density $g(y)$, a few graphs need to be drawn. I choose $g(y)=\frac{3}{26}(y+2)^2$, whose integral is $I=\frac{3}{26}\frac{(x+2)^3}{3}\big|^{1}_{-1}=1$ meaning that it is a pdf.
+```{r 2.2}
+# install.packages("graphics")
+library(graphics)
+#Define the formula
+x2 <- function(x) (x+2)^2*(3/26)
+curve(x2,-1,1,col="red",ylim=c(0,3),ylab="y")
+#Draw Pictures
+curve(exp,-1,1,add = TRUE,col="blue")
+legend("topleft",           #The legend is in the upper right corner
+legend=c("x2","exp"),        #content of legend
+col=c("red","blue"),         #color of legend
+lty=1,lwd=2)                 #size of legend 
+```
+
+It can be seen from the graph that two curves are similar, and thus the importance sampling towards $e^{x}$ works using $g(y)$ as alternative function.
+
+Let $U_i\sim U(-1,1)$ and use the approximate formula:
+$$\hat{I_3}=\frac{1}{N} \sum_{i=1}^{N} \frac{h(X_{i})}{g(X_i)}$$
+where $X_i\sim g^{-1}(U_i)$.
+```{r 2.3}
+set.seed(1)
+n = 10000
+
+cdfx2.r <- function(x) (26*x+1)^(1/3)-2
+x3 <- cdfx2.r(runif(n, 0, 1))
+X3 <- exp(x3)/x2(x3)
+I3 <- mean(X3); I3
+```
+
+( 2 ) The approximate 95% confidence interval of $\hat{I}$ is:
+$$\hat{\theta} \pm 2 \frac{S_N}{\sqrt{N}}.$$
+where $\hat{\theta}$ should be $\hat{I}$. In order to guarantee the accuracy of the calculated results to three decimal places at 95% confidence level, we need to solve:
+$$2 \frac{S_N}{\sqrt{N}}<0.0005$$
+Then we get:
+$$N>(4000S_N)^2$$
+
+* Importance Sampling
+
+Under the results in (1) when $N=1000$, $S_N$ can be obtained by:
+$$S_N=\sqrt{\frac{1}{N} \sum_{i=1}^N\left(e^x-\hat{I}\right)^2}$$
+```{r 2.5}
+N3 = (4000^2)*(var(X3)); N3
+```
+The number needed is condierably smaller than the ones of the previous two methods.
+
+( 3 ) Let $B=100$,
+```{r B}
+B=100
+```
+$N_3=460270$ to test if the results in 2. are correct.
+
+* Importance Sampling
+```{r 2.7}
+n = N3
+I3 <- c()
+#Alternative function definition
+cdfx2.r <- function(x) (26*x+1)^(1/3)-2
+for (j in 1:B) {
+  set.seed(j)
+  x3 <- cdfx2.r(runif(n, 0, 1))
+  X3 <- exp(x3)/x2(x3)
+  # point estimation of I
+  I3[j] <- mean(X3)
+}
+I3
+# mean of I(B)
+I3B = mean(I3)
+# sd of I
+sd3 <- sd(I3)
+# lower and upper bonds of IB
+l3 = I3B - 0.0005;l3
+u3 = I3B + 0.0005;u3
+# judge whether the point estimation is in the 95% CI and give the ratio of them
+length(I3[I3<=u3 & I3>=l3])/B
+# variance of sampling distribution
+var(I3)
+```
+According to the numbers of "TRUE" are both less than 5 in the results provided by two methods, I conclude that the specification of $N1$ and $N2$ is correct.
+
+Next, we can use to $B$ reach the same goal in (2), where we use the initial $N=10000$. That is, 
+$$B>(4000S_B)^2$$
+```{r add}
+n = 10000
+B = 10
+I3 <- c()
+#Alternative function definition
+cdfx2.r <- function(x) (26*x+1)^(1/3)-2
+for (j in 1:B) {
+  set.seed(j)
+  x3 <- cdfx2.r(runif(n, 0, 1))
+  X3 <- exp(x3)/x2(x3)
+  # point estimation of I
+  I3[j] <- mean(X3)
+}
+I3
+# mean of I(B)
+I3B = mean(I3);I3B
+# variance of sampling distribution
+var(I3)
+# minimum of B to satisfy the condition in (2)
+B3 = (4000^2)*(var(I3)); B3
+```
+
+( 4 ) 
+```{r 2.8}
+MAE3 <- mean(abs(I3-tr)); MAE3
+```
+
+## Ex 3.3
+( 1 )
+```{r 3.1}
+h <- function(x) exp(-x)/(1+x^2)
+f1 <- function(x) x/x
+f2 <- function(x) exp(-x)
+f3 <- function(x) 1/(pi*(1+x^2))
+f4 <- function(x) exp(-x)/(1-exp(-1))
+f5 <- function(x) 4/(pi*(1+x^2))
+
+# install.packages("graphics")
+library(graphics)
+#Define the formula
+curve(h,0,1,col="red",ylim=c(0,2),xlim = c(-0.5,1.5))
+#Draw Pictures
+curve(f1,0,1,add = TRUE,col="blue")
+curve(f2,0,10,add = TRUE,col="orange")
+curve(f3,-2,10,add = TRUE,col="green")
+curve(f4,0,1,add = TRUE,col="pink")
+curve(f5,0,1,add = TRUE,col="purple")
+
+legend("topright",           #The legend is in the upper right corner
+legend=c("h","f1","f2","f3","f4","f5"),        #content of legend
+col=c("red","blue","orange","green","pink","purple"),         #color of legend
+lty=1,lwd=2)                 #size of legend
+```
+
+( 2 )
+To make the process easier, I define a function to perform importance sampling and calculate variaces.
+```{r 3.2}
+IS <- function(fun, alt_pdf, alt_rcdf, n){
+  x3 <- alt_rcdf(runif(n, 0, 1))
+  X3 <- fun(x3)/alt_pdf(x3)
+  out <- list(mean(X3),var(X3))
+  return(out)
+}
+```
+The inverse functions of the alternative functions are: 
+```{r 3.3}
+set.seed(1)
+n=10000
+iF1 <- function(x) x
+iF2 <- function(x) -log(1-x)
+iF3 <- function(x) tan(pi*(x-1/2))
+iF4 <- function(x) -log(1-(1-exp(-1))*x)
+iF5 <- function(x) tan(pi*x/4)
+
+I <- c()
+v <- c()
+temp <- list()
+for (i in 1:5) {
+  temp <- IS(h, get(paste0("f", as.character(i))), get(paste0("iF", as.character(i))), n)
+  I[i] <- temp[[1]]
+  v[i] <- temp[[2]]
+}
+# results
+I
+# variance
+v
+```
+Since $f_2,\ x\in [0,1]$ and $f_3,\ x\in [0,1]$ are not pdfs, the results are far from the true value. Therefore, an indicative function need to be added to get samples of $f_2$ and $f_3$.
+
+```{r 3.4}
+IS1 <- function(fun, alt_pdf, alt_rcdf, n, from, to){
+  count = 0
+  X3 <- c()
+  while (count < n) {
+    x3 <- alt_rcdf(runif(1, 0, 1))
+    if (x3 > from & x3 <= to){
+      count = count+1
+      X3[count] <- fun(x3)/alt_pdf(x3)
+    }else{
+      next
+    }
+  }
+  out <- list(mean(X3),var(X3))
+  return(out)
+}
+
+set.seed(1)
+
+temp <- list()
+for (i in 2:3) {
+  temp <- IS1(h, get(paste0("f", as.character(i))), get(paste0("iF", as.character(i))), n, 0, 1)
+  I[i] <- temp[[1]]
+  v[i] <- temp[[2]]
+}
+# results
+I
+# variance
+v
+```
+The results are still incorrect, because integrals from 0 to 1 is not equl to 1, which means the $g(x)$ in the denominator is too small, making the estimated value considerably larger than the true value. Therefore, the only way to calculate the correct answers is to divide $f_2$ and $f_3$ by their integral from $0$ to $1$, which is $f_4$ and $f_5$.
+
+( 3 )
+
+Variance Analysis:
+
+Since $f_2$ and $f_3$ do not satisfy the condition of an alternative function, there is no need to analyse their variances.
+
+The variances obtained by $f_1$, $f_4$ and $f_5$ can be foreseen by their shape similarity with $h(x)$. From the graph above, I notice that $f_4$ fits $h(x)$ best, while the shape around $0$ of $f_4$ does not fit well. Using $f_1$ is equivalent with the average method. The larger variance is, the less similar with $h(x)$ that a pdf is. The results are consistent with the discussion above.
+```{r 3.5}
+# results
+I
+# variance
+v
+```
+
+( 4 )
+
+```{r 3.6}
+seq <- c(seq(0,1,0.1))
+n = 1000
+set.seed(1)
+I6 <- c()
+v6 <- c()
+for (i in 1:10) {
+  x <- runif(n, seq[i], seq[i+1])
+  I6[i] = 0.1*mean(h(x))
+  v6[i] = var(h(x))
+}
+# estimation of I
+sum(I6)
+# variance of I
+sum(v6)*(0.1)^2/n
+```
+
+
+
+## Ex 3.4
+( 1 )
+true value of the integral:
+$$I=\frac{\sqrt{2}}{2}(e^{-\frac{9}{4}}+e^{-9})\approx0.07461577$$
+```{r 3.4.0}
+tr = (exp(-9/4)+exp(-9))*sqrt(2)/2;tr
+```
+
+
+( 3 )
+```{r 3.4.1}
+set.seed(1)
+n = 1000
+h4 <- function(x){
+  exp(-0.5*(x-3)^2)+exp(-0.5*(x-6)^2)
+}
+```
+
+This problem can be solved via general importance sampling or importance sampling concerning composition sampling technique:
+
+-General Importance Sampling
+```{r 3.4.2}
+curve(h4,0,10)
+```
+From the curve of $h(x)$, I use the pdf of $N(4.5,4)$, which looks like this:
+```{r 3.4.3}
+norm4.5 <- function(x){
+  return((1/(2*sqrt(2*pi)))*exp(-0.125*(x-4.5)^2))
+}
+curve(h4,0,10)
+curve(norm4.5,add = TRUE)
+```
+This curve by and large fits $h(x)$.
+```{r 3.4.4}
+set.seed(1)
+x4 <- rnorm(n,4.5,2)
+X4 <- (dnorm(x4)*h4(x4))/norm4.5(x4)
+I6 <- mean(X4);I6
+e1 = 1.96*sqrt(mean((X4-tr)^2))/sqrt(n);e1
+```
+
+-Importance Sampling concerning composition sampling technique
+$h(x)$ is very much like the mixture of pdfs of two distribution, $N(3,1)$ and $N(6,1)$. So I use:
+$$g(x) \propto h(x)$$
+The integral of $h(x)$ is:
+\begin{aligned}
+I&=\int_{-\infty}^{\infty}\exp \left(-\frac{1}{2}(x-3)^{2}\right)+\exp \left(-\frac{1}{2}(x-6)^{2}\right) dx \\
+&=2\sqrt{2\pi} \\
+&\approx5.013257
+\end{aligned}
+
+So $$g(x)=\frac{0.5}{\sqrt{2\pi}}\exp \left(-\frac{1}{2}(x-3)^{2}\right)+\frac{0.5}{\sqrt{2\pi}}\exp \left(-\frac{1}{2}(x-6)^{2}\right)$$
+```{r 3.4.5}
+g4 <- function(x){
+  return(0.5/(sqrt(2*pi))*exp(-0.5*(x-3)^2)+0.5/(sqrt(2*pi))*exp(-0.5*(x-6)^2))
+}
+```
+Sample $g(x)$ using the composition sampling technique:
+```{r 3.4.6}
+set.seed(1)
+x4 <- c()
+for (i in 1:n) {
+  u <- runif(1,0,1)
+  if(u<0.5){
+    x4[i] <- rnorm(1,3,1)
+  }else{
+    x4[i] <- rnorm(1,6,1)
+  }
+}
+X4 <- (dnorm(x4)*h4(x4))/g4(x4)
+I6 <- mean(X4);I6
+#Error bounds at 95% confidence level
+e2 = 1.96*sqrt(mean((X4-tr)^2))/sqrt(n);e2
+```
+From error bounds, the second method is considered better.
+
+## Ex 3.5
+( 1 )
+
+Suppose that generating $N$ standard normal random numbers can guarantee at least 1 number greater than 4.5 on average, that is:
+$$E(n)=\theta N\geq1$$
+$$N\geq294290.75$$
+meaning that $N$ should be at least $294291$ to guarantee.
+
+( 2 )
+
+Estimating $\theta=P(X>4.5)=3.398 \times 10^{-6}$ is equivalent to calculate the integral:
+$$I=\frac{1}{\sqrt{2\pi}}\int_{4.5}^{+\infty} e^{-\frac{1}{2}x^2}dx$$
+```{r 3.5.1}
+set.seed(1)
+n = 1000
+x5 <- -log(runif(n,0,1))+4.5
+X5 <- dnorm(x5)/exp(-(x5-4.5))
+theta <- mean(X5);theta
+#Error bounds at 95% confidence level
+e = 1.96*sqrt(mean((X5-3.398*10^(-6))^2))/sqrt(n);e
+```
+Note that the pdf of $W$ is $p_W(x)=e^{-(x-5)}$.
