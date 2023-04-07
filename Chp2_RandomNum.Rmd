@@ -1,16 +1,12 @@
 ---
-title: "Exercises of Chapter 2: Random Number"
+title: "Exercises of Chapter 6: Non-uniformly Distributed Random Number Generation"
 author: "Qihun Yang"
 date: "2023-03-12"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-## Ex2.2
-#(1)
+## Ex 1
+1.
 ```{r 100}
 set.seed(1)
 n = 100
@@ -28,7 +24,7 @@ z=(z-(1/3)*n)/sqrt(n*(1/3)*(2/3))
 2*pnorm(z)
 
 ```
-#(2)
+2.
 ```{r 1000}
 set.seed(1)
 n = 1000
@@ -45,7 +41,7 @@ z=sum(r == 1)/sum(r!=0)
 z=(z-(1/3)*n)/sqrt(n*(1/3)*(2/3))
 2*pnorm(z)
 ```
-#(3)
+3.
 ```{r 10000}
 set.seed(1)
 n = 10000
@@ -62,12 +58,12 @@ z=sum(r == 1)/sum(r!=0)
 z=(z-(1/3)*n)/sqrt(n*(1/3)*(2/3))
 2*pnorm(z)
 ```
-#(4)
+4.
 For the condition $P(X=1)=1/3$，we can conduct a hypothesis test:
 $$H_0:P(X=1)=1/3,\ H_1:P(X=1)\neq1/3$$
 Under the null hypothesis，the random numbers follow the distribution: $Bin(n,1/3)$. According to the central limit theorem, binomial distribution is equivalent to normal distribution if $n\to \infty$. Based on this asymptotic distribution，we can obtain the p-value of the three situations (see the results of three questions above). All p-values are close to 0, and thus we do not reject the null hypothesis.
 
-## Ex2.4
+## Ex 3
 ```{r cards}
 m <- 54
 n <- 10000
@@ -87,16 +83,34 @@ Now derive the disstribu tion of $T$:
 
 $$P\{T=k\}=\frac{{54 \choose k}(54-k)!\sum_{i=0}^{54-k}\frac{(-1)^i}{i!}}{54!}$$
 
+## Ex 4
+```{r dice}
+n <- 1000
+T <- c()
+start <- 2
+end <- 12
 
 
+for (i in 1:n) {
+  index <- data.frame(start:end,c(rep(TRUE,end-start+1)))
+  num <- 0
+  set.seed(i)
+  while (as.logical(sum(index[,2])) == TRUE)
+  {
+    x1 <- ceiling(6*runif(1, min = 0, max = 1))
+    x2 <- ceiling(6*runif(1, min = 0, max = 1))
+    temp <- x1+x2
+    if (index[index[,1]==temp,2])
+      index[index[,1]==temp,2] = FALSE
+    num = num +1
+  }
+  T[i] = num
+}
+mean(T)
+var(T)
+```
 
-
-
-
-
-
-
-## Ex 2.15
+## Ex 9
 
 Directly sample from $\exp(1)$ distribution and keep those less than $0.05$ until obtaining $1000$ random numbers.
 ```{r 15.1}
@@ -129,11 +143,11 @@ theoretical variance:
 ```
 Two expectations are approximately equal.
 
-## Ex 2.20
+## Ex 12
 
 I adopt the rejection sampling in this problem, where the key process lies in the selection of envelope $g(x)$. I evaluate the efficiency of the method by examine the execution time.
 
-#(1)
+( 1 )
 
 $g(x)=\frac{1}{2}e^{-\frac{1}{2}x},\ x>0$
 
@@ -169,7 +183,7 @@ e=Sys.time()
 print(e-s)
 ```
 
-#(2)
+( 2 )
 
 $g(x)=\frac{1}{8}e^{-\frac{1}{8}x},\ x>0$
 
@@ -205,10 +219,10 @@ print(e-s)
 
 It can be seen that the second algorithm takes about half the time of the first algorithm, so the second algorithm is more efficient. 
 
-## Ex 2.23
+## Ex 15
 
 
-#(1) Inverse cdf method
+( 1 ) Inverse cdf method
 
 the Cumulative Distribution Function is 
 $$
@@ -239,7 +253,7 @@ if (r < 0.5){
 X
 ```
 
-#(2) Mixture Sampling
+( 2 ) Mixture Sampling
 
 The pdf can be represented as:
 $$
