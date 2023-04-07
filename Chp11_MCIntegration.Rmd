@@ -1,0 +1,63 @@
+---
+title: "MC_Integration"
+author: "Qihun Yang"
+date: "2023-04-07"
+output: html_document
+---
+## Ex.1
+1. $E(K)=e$
+2.
+```{r 1.1}
+set.seed(1)
+n = 100000
+count = 0
+K <- c()
+for (count in 1:n){
+  sum = 0
+  K[count] <- 0
+  while (sum <= 1) {
+    r <- runif(1,0,1)
+    sum = sum + r
+    K[count] = K[count] + 1
+  }
+}
+EK = mean(K); EK
+```
+3.
+```{r 1.2}
+# standard deviation of K
+sdk = sd(K);sdk
+# 95% confidence level CI
+lb=EK-2*sdk/sqrt(n);lb
+up=EK+2*sdk/sqrt(n);up
+```
+95% confidence level CI of $K$ is $[2.712233,2.723307]$, which contains the true value of $e=2.718282$
+
+## Ex.2
+3.
+```{r 2.1}
+n = 10000
+set.seed(1)
+M <- c()
+for (i in 1:n) {
+  Mi = 2
+  u1 = runif(1, 0, 1)
+  repeat {
+    u2 = runif(1, 0, 1)
+    if (u1 > u2) {
+      break
+    }else{
+      Mi = Mi + 1
+      u1 = u2
+    }
+  }
+  M[i] = Mi
+}
+est = mean(M);est
+```
+4.
+```{r 2.2}
+sd = sqrt(mean((M - exp(1))^2));sd
+# 95% confidence interval
+print(paste0('[',as.character(est-1.96*sd/sqrt(n)),',',est+1.96*sd/sqrt(n),']'))
+```
