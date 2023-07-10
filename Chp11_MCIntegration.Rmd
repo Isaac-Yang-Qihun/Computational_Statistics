@@ -5,6 +5,15 @@ date: "2023-04-07"
 output: html_document
 ---
 ## Ex.1
+设 $\left\{U_i, i=1,2, \ldots\right\}$ 为独立同 $\mathrm{U}(0,1)$
+分布的随机变量序列。令 $$
+K=\min \left\{k: \sum_{i=1}^k U_i>1\right\} .
+$$ (1) 证明 $EK=e$。
+
+(2) 生成 $K$ 的 $N$ 个独立抽样, 用平均值 $\bar{K}$ 估计 $e$ 。
+
+(3) 估计 $\bar{K}$ 的标准差，给出 $e$ 的近似 $95 \%$ 置信区间。
+
 1. $E(K)=e$
 2.
 ```{r 1.1}
@@ -28,12 +37,60 @@ EK = mean(K); EK
 # standard deviation of K
 sdk = sd(K);sdk
 # 95% confidence level CI
-lb=EK-2*sdk/sqrt(n);lb
-up=EK+2*sdk/sqrt(n);up
+lb=EK-qnorm(0.975)*sdk/sqrt(n);lb
+up=EK+qnorm(0.975)*sdk/sqrt(n);up
 ```
 95% confidence level CI of $K$ is $[2.712233,2.723307]$, which contains the true value of $e=2.718282$
 
 ## Ex.2
+设 $\left\{U_i, i=1,2, \ldots\right\}$ 为独立同
+$\mathrm{U}(0,1)$ 分布的随机变量序列。令 $M$ 为序列中第一个比前
+一个值小的元素的序号, 即 
+$$
+M=\min \left\{m: U_1 \leq U_2 \leq \cdots \leq U_{m-1}, U_{m-1}>U_m, m \geq 2\right\}
+$$
+
+(1) 证明 $P(M>n)=\frac{1}{n !}, n \geq 2$ 。\ 
+
+(2) 用概率论中的恒等式
+$E M=\sum_{n=0}^{\infty} P(M>n)$ 证明 $E M=e_{\text {。 }}$ \ 
+
+(3) 生成 $M$
+的 $N$ 个独立抽样, 用平均值 $\bar{M}$ 估计 $e_{\text {。 }}$ \ 
+
+(4) 估计
+$\bar{M}$ 的标准差, 给出 $e$ 的近似 $95 \%$ 置信区间。
+
+(1)证明：\
+依题意，事件{$M\geq n$}意味着{$U_1\leq U_2 \leq U_3 \leq \cdots \leq U_n$}则当$n\geq 2$时，
+
+```{=tex}
+\begin{aligned}
+
+p\left(M> n\right) &= p\left( U_1\leq U_2 \leq U_3 \leq \cdots \leq U_n \right)\\
+&= \int^{1}_{0}\int^{1}_{2}\cdots \int^{1}_{u_{n-2}}  \int^{1}_{u_{n-1}} 1 d u_n du_{n-1} \cdots d u_2 d u_1 \\
+&=\int^{1}_{0}\int^{1}_{2}\cdots \int^{1}_{u_{n-2}}   (1-u_{n-1})  du_{n-1} \cdots d u_2 d u_1 \\
+&= \cdots = \int^1_0 \frac{\left( 1-u_1 \right)^{n-1}}{(n-1)!}d u_1=\frac{1}{n!}
+
+\end{aligned}
+```
+题设得证。   
+
+(2)证明：
+```{=tex}
+\begin{aligned}
+
+\textrm{E} M &= \sum_{n=2}^{\infty} n P(M=n)\\
+&=2*P(M=2)+3*P(M=3)+4*P(M=4)+\cdots\\
+&=2*P(M = 2)+3* P(M > 2)+P(M > 3)+P(M > 4)+\cdots\\
+&= 2*P(M \geq 2)+\sum^{\infty}_{n=2}P(M > n)\\
+&=2+\sum^{\infty}_{n=2}\frac{1}{n!}=e
+
+\end{aligned}
+```
+题设得证。
+
+
 3.
 ```{r 2.1}
 n = 10000
