@@ -6,64 +6,77 @@ output: html_document
 ---
 
 ## Ex.1
-1.
-```{r 100}
-set.seed(1)
-n = 100
-r <- runif(n, min = 0, max = 1)
-for (i in 1:n)
-{
-  if (r[i]>1/3)
-    r[i] = 2
-  else
-    r[i] = 1
-}
-sum(r == 1)/sum(r!=0)
-z=sum(r == 1)/sum(r!=0)
-z=(z-(1/3)*n)/sqrt(n*(1/3)*(2/3))
-2*pnorm(z)
+$n$ 个如下离散型分布随机数: $P(X=1)=1 / 3, P(X=2)=2 / 3$.
 
-```
-2.
-```{r 1000}
+(1)生成 $n=100$ 个这样的随机数，计算 $X$ 取1的百分比;\
+(2)生成 $n=1000$ 个这样的随机数，计算 $X$ 取1的百分比;\
+(3)生成 $n=10000$ 个这样的随机数，计算 $X$ 取1的百分比;
+
+```{r setup, include=T}
+rm(list = ls())
 set.seed(1)
-n = 1000
-r <- runif(n, min = 0, max = 1)
-for (i in 1:n)
-{
-  if (r[i]>1/3)
-    r[i] = 2
-  else
-    r[i] = 1
+fun1=function(i){
+  u=runif (1,0,1)
+  return(ifelse(u<1/3,1,2))
 }
-sum(r == 1)/sum(r!=0)
-z=sum(r == 1)/sum(r!=0)
-z=(z-(1/3)*n)/sqrt(n*(1/3)*(2/3))
-2*pnorm(z)
-```
-3.
-```{r 10000}
-set.seed(1)
-n = 10000
-r <- runif(n, min = 0, max = 1)
-for (i in 1:n)
-{
-  if (r[i]>1/3)
-    r[i] = 2
-  else
-    r[i] = 1
+T_2 = list()
+p = rep(0,3)
+for (j in 1:3) {
+  T_2[[j]] = sapply(1:10^(j+1), FUN=fun1)
+  p[j] = (sum(T_2[[j]] == 1))/length(T_2[[j]])
+  print(p[j])
 }
-sum(r == 1)/sum(r!=0)
-z=sum(r == 1)/sum(r!=0)
-z=(z-(1/3)*n)/sqrt(n*(1/3)*(2/3))
-2*pnorm(z)
 ```
-4.
-For the condition $P(X=1)=1/3$，we can conduct a hypothesis test:
-$$H_0:P(X=1)=1/3,\ H_1:P(X=1)\neq1/3$$
-Under the null hypothesis，the random numbers follow the distribution: $Bin(n,1/3)$. According to the central limit theorem, binomial distribution is equivalent to normal distribution if $n\to \infty$. Based on this asymptotic distribution，we can obtain the p-value of the three situations (see the results of three questions above). All p-values are close to 0, and thus we do not reject the null hypothesis.
+
+(4)$E X=5 / 3 \quad D X=2 / 9$ 由中心极限定理得 $\frac{\bar{X}-\frac{5}{3}}{\sqrt{\frac{2}{9 n}}} \rightarrow N(0,1)$ 由 $f_n=2-\bar{X}$ 得 $f_n$ 的渐近分布 : $f_n \rightarrow N\left(\frac{1}{3}, \frac{2}{9 n}\right)$ 对 $H_0: P(X=1)=1 / 3 ; \quad H_1: P(X=1) \neq 1 / 3$ 进行检验: 检验统计量 $Z_n=\frac{f_n-\frac{1}{3}}{\sqrt{\frac{2}{9 n}}}$ 在 $H_0$ 下近似服从 $N(0,1)$ $\alpha=0.05$ 下, 当 $\left|Z_n\right|>Z_{0.975}=1.9599$ 时拒绝 $H_0$ 。
+
+```{r}
+print(paste('n=100时计算检验统计量为',round(abs((p[1]-1/3)/sqrt(2/9/100)),4),sep = ''))
+print(paste('n=1000时计算检验统计量为',round(abs((p[2]-1/3)/sqrt(2/9/1000)),4),sep = ''))
+print(paste('n=10000时计算检验统计量为',round(abs((p[3]-1/3)/sqrt(2/9/10000)),4),sep = ''))
+```
+
+在$\alpha=0.05$ 下，都得到不拒绝$H_0$的结论。
 
 ## Ex.3
+洗好一副编号为 $1,2, \ldots, 54$ 的纸牌，依次抽出来，若第次抽取到编号为 $i$ 的纸牌则为成功抽取。编写程序估计成功抽 取个数 $T$ 的期望和方差，推导理论公式并与模拟结果进行比较。\
+    (1)理论推导:\
+    (a)先求: 共有 $N$ 张牌，洗牌后依次抽取完毕，至少有 1 次成功抽取的概率。 记 $A_i=$ {第 $i$ 次抽取是成功抽取 $\}$, 则有 $$
+    P\left(A_i\right)=\frac{1}{N}, \quad P\left(A_i A_j\right)=\frac{1}{N(N-1)}, \quad \cdots, \quad P\left(A_1 \cdots A_N\right)=\frac{1}{N !} .
+    $$ 故至少有 1 次成功抽取的概率为: $$
+    \begin{aligned}
+    P\left(A_1 \cup A_2 \cdots \cup A_N\right) & =\sum_{i=1}^N P\left(A_i\right)-\sum_{1 \leq i<j \leq N} P\left(A_i A_j\right)+\cdots+(-1)^{N-1} \cdot P\left(A_1 \cdots A_N\right) \\
+    & =\left(\begin{array}{c}
+    N \\
+    1
+    \end{array}\right) \frac{1}{N}-\left(\begin{array}{c}
+    N \\
+    2
+    \end{array}\right) \frac{1}{N(N-1)}+\cdots+(-1)^{N-1} \cdot\left(\begin{array}{l}
+    N \\
+    N
+    \end{array}\right) \frac{1}{N !} \\
+    & =\sum_{k=1}^N(-1)^{k-1} \frac{1}{k !}
+    \end{aligned}
+    $$ (b)下面求 $P(T=k)$ 设共有 $N$ 张牌，则有 $k$ 次成功抽取的可能情形共有 $\left(\begin{array}{c}N \\ k\end{array}\right)$ 种。 指定的 $k$ 次成功抽取的概率为 $$
+    \frac{1}{N(N-1) \cdots(N-k+1)}=\frac{(N-k) !}{N !}
+    $$ 由(a),剩余的 $N-k$ 次都没有成功抽取的概率为 $$
+    1-\sum_{i=1}^{N-k}(-1)^{i-1} \frac{1}{i !}=1+\sum_{i=1}^{N-k}(-1)^i \frac{1}{i !}=\sum_{i=0}^{N-k} \frac{(-1)^i}{i !} .
+    $$ 故 $N=54$ 时，成功抽取个数为 $k$ 的概率为 $$
+    \begin{aligned}
+    P(T=k) & =\left(\begin{array}{l}
+    N \\
+    k
+    \end{array}\right) \cdot \frac{(N-k) !}{N !} \cdot \sum_{i=0}^{N-k} \frac{(-1)^i}{i !} \\
+    & =\frac{1}{k !} \sum_{i=1}^{N-k} \frac{(-1)^i}{i !} \\
+    & =\frac{1}{k !} \sum_{i=1}^{54-k} \frac{(-1)^i}{i !}
+    \end{aligned}
+    $$ (c)下面求 $E(T)$ $$
+    E(T)=\sum_{k=0}^{54} k \cdot \frac{1}{k !} \sum_{i=0}^{54-k} \frac{(-1)^i}{i !} .=1
+    $$ (d)下面求 $\operatorname{Var}(T)$ $$
+    \operatorname{Var}(T)=E\left(T^2\right)-(E(T))^2=\sum_{k=0}^{54} k^2 \cdot \frac{1}{k !} \sum_{i=0}^{54-k} \frac{(-1)^i}{i !}-1^2=1 .
+    $$ 
+    (2)随机试验验证
 ```{r cards}
 m <- 54
 n <- 10000
@@ -79,9 +92,6 @@ for (i in 1:n)
 mean(T)
 var(T)
 ```
-Now derive the disstribu tion of $T$: 
-
-$$P\{T=k\}=\frac{{54 \choose k}(54-k)!\sum_{i=0}^{54-k}\frac{(-1)^i}{i!}}{54!}$$
 
 ## Ex.4
 ```{r dice}
@@ -144,7 +154,13 @@ theoretical variance:
 Two expectations are approximately equal.
 
 ## Ex.12
+Method 1: Inverse CDF:\
+I first generate $U_1 \sim U(0,1), \quad U_2 \sim U(0,1)$. 
+$Y_1:=-\ln U_1 \sim \operatorname{Exp}(1), \quad Y_2:=-\ln U_2 \sim \operatorname{Exp}(1)$,
+therefore $X=Y_1+Y_2=-\ln U_1 U_2 \sim G a m m a(2,1)$  
 
+
+Method 2: Rejection Sampling\
 I adopt the rejection sampling in this problem, where the key process lies in the selection of envelope $g(x)$. I evaluate the efficiency of the method by examine the execution time.
 
 ( 1 )

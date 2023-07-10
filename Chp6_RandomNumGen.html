@@ -360,77 +360,104 @@ Distributed Random Number Generation</h1>
 
 <div id="ex.1" class="section level2">
 <h2>Ex.1</h2>
-<ol style="list-style-type: decimal">
-<li></li>
-</ol>
-<pre class="r"><code>set.seed(1)
-n = 100
-r &lt;- runif(n, min = 0, max = 1)
-for (i in 1:n)
-{
-  if (r[i]&gt;1/3)
-    r[i] = 2
-  else
-    r[i] = 1
+<p><span class="math inline">\(n\)</span> 个如下离散型分布随机数: <span class="math inline">\(P(X=1)=1 / 3, P(X=2)=2 / 3\)</span>.</p>
+<p>(1)生成 <span class="math inline">\(n=100\)</span>
+个这样的随机数，计算 <span class="math inline">\(X\)</span>
+取1的百分比;<br />
+(2)生成 <span class="math inline">\(n=1000\)</span> 个这样的随机数，计算
+<span class="math inline">\(X\)</span> 取1的百分比;<br />
+(3)生成 <span class="math inline">\(n=10000\)</span>
+个这样的随机数，计算 <span class="math inline">\(X\)</span>
+取1的百分比;</p>
+<pre class="r"><code>rm(list = ls())
+set.seed(1)
+fun1=function(i){
+  u=runif (1,0,1)
+  return(ifelse(u&lt;1/3,1,2))
 }
-sum(r == 1)/sum(r!=0)</code></pre>
-<pre><code>## [1] 0.27</code></pre>
-<pre class="r"><code>z=sum(r == 1)/sum(r!=0)
-z=(z-(1/3)*n)/sqrt(n*(1/3)*(2/3))
-2*pnorm(z)</code></pre>
-<pre><code>## [1] 2.319439e-12</code></pre>
-<ol start="2" style="list-style-type: decimal">
-<li></li>
-</ol>
-<pre class="r"><code>set.seed(1)
-n = 1000
-r &lt;- runif(n, min = 0, max = 1)
-for (i in 1:n)
-{
-  if (r[i]&gt;1/3)
-    r[i] = 2
-  else
-    r[i] = 1
-}
-sum(r == 1)/sum(r!=0)</code></pre>
-<pre><code>## [1] 0.32</code></pre>
-<pre class="r"><code>z=sum(r == 1)/sum(r!=0)
-z=(z-(1/3)*n)/sqrt(n*(1/3)*(2/3))
-2*pnorm(z)</code></pre>
-<pre><code>## [1] 1.537259e-110</code></pre>
-<ol start="3" style="list-style-type: decimal">
-<li></li>
-</ol>
-<pre class="r"><code>set.seed(1)
-n = 10000
-r &lt;- runif(n, min = 0, max = 1)
-for (i in 1:n)
-{
-  if (r[i]&gt;1/3)
-    r[i] = 2
-  else
-    r[i] = 1
-}
-sum(r == 1)/sum(r!=0)</code></pre>
-<pre><code>## [1] 0.3323</code></pre>
-<pre class="r"><code>z=sum(r == 1)/sum(r!=0)
-z=(z-(1/3)*n)/sqrt(n*(1/3)*(2/3))
-2*pnorm(z)</code></pre>
-<pre><code>## [1] 0</code></pre>
-<ol start="4" style="list-style-type: decimal">
-<li>For the condition <span class="math inline">\(P(X=1)=1/3\)</span>，we can conduct a hypothesis
-test: <span class="math display">\[H_0:P(X=1)=1/3,\
-H_1:P(X=1)\neq1/3\]</span> Under the null hypothesis，the random numbers
-follow the distribution: <span class="math inline">\(Bin(n,1/3)\)</span>. According to the central
-limit theorem, binomial distribution is equivalent to normal
-distribution if <span class="math inline">\(n\to \infty\)</span>. Based
-on this asymptotic distribution，we can obtain the p-value of the three
-situations (see the results of three questions above). All p-values are
-close to 0, and thus we do not reject the null hypothesis.</li>
-</ol>
+T_2 = list()
+p = rep(0,3)
+for (j in 1:3) {
+  T_2[[j]] = sapply(1:10^(j+1), FUN=fun1)
+  p[j] = (sum(T_2[[j]] == 1))/length(T_2[[j]])
+  print(p[j])
+}</code></pre>
+<pre><code>## [1] 0.27
+## [1] 0.324
+## [1] 0.3331</code></pre>
+<p>(4)<span class="math inline">\(E X=5 / 3 \quad D X=2 / 9\)</span>
+由中心极限定理得 <span class="math inline">\(\frac{\bar{X}-\frac{5}{3}}{\sqrt{\frac{2}{9 n}}}
+\rightarrow N(0,1)\)</span> 由 <span class="math inline">\(f_n=2-\bar{X}\)</span> 得 <span class="math inline">\(f_n\)</span> 的渐近分布 : <span class="math inline">\(f_n \rightarrow N\left(\frac{1}{3}, \frac{2}{9
+n}\right)\)</span> 对 <span class="math inline">\(H_0: P(X=1)=1 / 3 ;
+\quad H_1: P(X=1) \neq 1 / 3\)</span> 进行检验: 检验统计量 <span class="math inline">\(Z_n=\frac{f_n-\frac{1}{3}}{\sqrt{\frac{2}{9
+n}}}\)</span> 在 <span class="math inline">\(H_0\)</span> 下近似服从
+<span class="math inline">\(N(0,1)\)</span> <span class="math inline">\(\alpha=0.05\)</span> 下, 当 <span class="math inline">\(\left|Z_n\right|&gt;Z_{0.975}=1.9599\)</span>
+时拒绝 <span class="math inline">\(H_0\)</span> 。</p>
+<pre class="r"><code>print(paste(&#39;n=100时计算检验统计量为&#39;,round(abs((p[1]-1/3)/sqrt(2/9/100)),4),sep = &#39;&#39;))</code></pre>
+<pre><code>## [1] &quot;n=100时计算检验统计量为1.3435&quot;</code></pre>
+<pre class="r"><code>print(paste(&#39;n=1000时计算检验统计量为&#39;,round(abs((p[2]-1/3)/sqrt(2/9/1000)),4),sep = &#39;&#39;))</code></pre>
+<pre><code>## [1] &quot;n=1000时计算检验统计量为0.6261&quot;</code></pre>
+<pre class="r"><code>print(paste(&#39;n=10000时计算检验统计量为&#39;,round(abs((p[3]-1/3)/sqrt(2/9/10000)),4),sep = &#39;&#39;))</code></pre>
+<pre><code>## [1] &quot;n=10000时计算检验统计量为0.0495&quot;</code></pre>
+<p>在<span class="math inline">\(\alpha=0.05\)</span>
+下，都得到不拒绝<span class="math inline">\(H_0\)</span>的结论。</p>
 </div>
-<div id="ex-3" class="section level2">
-<h2>Ex 3</h2>
+<div id="ex.3" class="section level2">
+<h2>Ex.3</h2>
+<p>洗好一副编号为 <span class="math inline">\(1,2, \ldots, 54\)</span>
+的纸牌，依次抽出来，若第次抽取到编号为 <span class="math inline">\(i\)</span> 的纸牌则为成功抽取。编写程序估计成功抽
+取个数 <span class="math inline">\(T\)</span>
+的期望和方差，推导理论公式并与模拟结果进行比较。<br />
+(1)理论推导:<br />
+(a)先求: 共有 <span class="math inline">\(N\)</span>
+张牌，洗牌后依次抽取完毕，至少有 1 次成功抽取的概率。 记 <span class="math inline">\(A_i=\)</span> {第 <span class="math inline">\(i\)</span> 次抽取是成功抽取 <span class="math inline">\(\}\)</span>, 则有 <span class="math display">\[
+    P\left(A_i\right)=\frac{1}{N}, \quad P\left(A_i
+A_j\right)=\frac{1}{N(N-1)}, \quad \cdots, \quad P\left(A_1 \cdots
+A_N\right)=\frac{1}{N !} .
+    \]</span> 故至少有 1 次成功抽取的概率为: <span class="math display">\[
+    \begin{aligned}
+    P\left(A_1 \cup A_2 \cdots \cup A_N\right) &amp; =\sum_{i=1}^N
+P\left(A_i\right)-\sum_{1 \leq i&lt;j \leq N} P\left(A_i
+A_j\right)+\cdots+(-1)^{N-1} \cdot P\left(A_1 \cdots A_N\right) \\
+    &amp; =\left(\begin{array}{c}
+    N \\
+    1
+    \end{array}\right) \frac{1}{N}-\left(\begin{array}{c}
+    N \\
+    2
+    \end{array}\right) \frac{1}{N(N-1)}+\cdots+(-1)^{N-1}
+\cdot\left(\begin{array}{l}
+    N \\
+    N
+    \end{array}\right) \frac{1}{N !} \\
+    &amp; =\sum_{k=1}^N(-1)^{k-1} \frac{1}{k !}
+    \end{aligned}
+    \]</span> (b)下面求 <span class="math inline">\(P(T=k)\)</span>
+设共有 <span class="math inline">\(N\)</span> 张牌，则有 <span class="math inline">\(k\)</span> 次成功抽取的可能情形共有 <span class="math inline">\(\left(\begin{array}{c}N \\
+k\end{array}\right)\)</span> 种。 指定的 <span class="math inline">\(k\)</span> 次成功抽取的概率为 <span class="math display">\[
+    \frac{1}{N(N-1) \cdots(N-k+1)}=\frac{(N-k) !}{N !}
+    \]</span> 由(a),剩余的 <span class="math inline">\(N-k\)</span>
+次都没有成功抽取的概率为 <span class="math display">\[
+    1-\sum_{i=1}^{N-k}(-1)^{i-1} \frac{1}{i !}=1+\sum_{i=1}^{N-k}(-1)^i
+\frac{1}{i !}=\sum_{i=0}^{N-k} \frac{(-1)^i}{i !} .
+    \]</span> 故 <span class="math inline">\(N=54\)</span>
+时，成功抽取个数为 <span class="math inline">\(k\)</span> 的概率为 <span class="math display">\[
+    \begin{aligned}
+    P(T=k) &amp; =\left(\begin{array}{l}
+    N \\
+    k
+    \end{array}\right) \cdot \frac{(N-k) !}{N !} \cdot \sum_{i=0}^{N-k}
+\frac{(-1)^i}{i !} \\
+    &amp; =\frac{1}{k !} \sum_{i=1}^{N-k} \frac{(-1)^i}{i !} \\
+    &amp; =\frac{1}{k !} \sum_{i=1}^{54-k} \frac{(-1)^i}{i !}
+    \end{aligned}
+    \]</span> (c)下面求 <span class="math inline">\(E(T)\)</span> <span class="math display">\[
+    E(T)=\sum_{k=0}^{54} k \cdot \frac{1}{k !} \sum_{i=0}^{54-k}
+\frac{(-1)^i}{i !} .=1
+    \]</span> (d)下面求 <span class="math inline">\(\operatorname{Var}(T)\)</span> <span class="math display">\[
+    \operatorname{Var}(T)=E\left(T^2\right)-(E(T))^2=\sum_{k=0}^{54} k^2
+\cdot \frac{1}{k !} \sum_{i=0}^{54-k} \frac{(-1)^i}{i !}-1^2=1 .
+    \]</span> (2)随机试验验证</p>
 <pre class="r"><code>m &lt;- 54
 n &lt;- 10000
 T &lt;- c()
@@ -446,12 +473,9 @@ mean(T)</code></pre>
 <pre><code>## [1] 1.0003</code></pre>
 <pre class="r"><code>var(T)</code></pre>
 <pre><code>## [1] 0.9983997</code></pre>
-<p>Now derive the disstribu tion of <span class="math inline">\(T\)</span>:</p>
-<p><span class="math display">\[P\{T=k\}=\frac{{54 \choose
-k}(54-k)!\sum_{i=0}^{54-k}\frac{(-1)^i}{i!}}{54!}\]</span></p>
 </div>
-<div id="ex-4" class="section level2">
-<h2>Ex 4</h2>
+<div id="ex.4" class="section level2">
+<h2>Ex.4</h2>
 <pre class="r"><code>n &lt;- 1000
 T &lt;- c()
 start &lt;- 2
@@ -478,8 +502,8 @@ mean(T)</code></pre>
 <pre class="r"><code>var(T)</code></pre>
 <pre><code>## [1] 1333.632</code></pre>
 </div>
-<div id="ex-9" class="section level2">
-<h2>Ex 9</h2>
+<div id="ex.9" class="section level2">
+<h2>Ex.9</h2>
 <p>Directly sample from <span class="math inline">\(\exp(1)\)</span>
 distribution and keep those less than <span class="math inline">\(0.05\)</span> until obtaining <span class="math inline">\(1000\)</span> random numbers.</p>
 <pre class="r"><code>set.seed(1)
@@ -509,9 +533,16 @@ E(X|X&lt;0.05)&amp;=\int_{0}^{0.05}\frac{xe^{-x}}{1-e^{-0.05}}dx \\
 <pre><code>## [1] 0.02479168</code></pre>
 <p>Two expectations are approximately equal.</p>
 </div>
-<div id="ex-12" class="section level2">
-<h2>Ex 12</h2>
-<p>I adopt the rejection sampling in this problem, where the key process
+<div id="ex.12" class="section level2">
+<h2>Ex.12</h2>
+<p>Method 1: Inverse CDF:<br />
+I first generate <span class="math inline">\(U_1 \sim U(0,1), \quad U_2
+\sim U(0,1)\)</span>. <span class="math inline">\(Y_1:=-\ln U_1 \sim
+\operatorname{Exp}(1), \quad Y_2:=-\ln U_2 \sim
+\operatorname{Exp}(1)\)</span>, therefore <span class="math inline">\(X=Y_1+Y_2=-\ln U_1 U_2 \sim G a m m
+a(2,1)\)</span></p>
+<p>Method 2: Rejection Sampling<br />
+I adopt the rejection sampling in this problem, where the key process
 lies in the selection of envelope <span class="math inline">\(g(x)\)</span>. I evaluate the efficiency of the
 method by examine the execution time.</p>
 <p>( 1 )</p>
@@ -545,7 +576,7 @@ while (count &lt; n){
 e=Sys.time()
 #operation time
 print(e-s)</code></pre>
-<pre><code>## Time difference of 0.01828289 secs</code></pre>
+<pre><code>## Time difference of 0.03954887 secs</code></pre>
 <p>( 2 )</p>
 <p><span class="math inline">\(g(x)=\frac{1}{8}e^{-\frac{1}{8}x},\
 x&gt;0\)</span></p>
@@ -575,12 +606,12 @@ while (count &lt; n){
 e=Sys.time()
 #operation time
 print(e-s)</code></pre>
-<pre><code>## Time difference of 0.01683021 secs</code></pre>
+<pre><code>## Time difference of 0.01930404 secs</code></pre>
 <p>It can be seen that the second algorithm takes about half the time of
 the first algorithm, so the second algorithm is more efficient.</p>
 </div>
-<div id="ex-15" class="section level2">
-<h2>Ex 15</h2>
+<div id="ex.15" class="section level2">
+<h2>Ex.15</h2>
 <p>( 1 ) Inverse cdf method</p>
 <p>the Cumulative Distribution Function is <span class="math display">\[
 F(x)=
