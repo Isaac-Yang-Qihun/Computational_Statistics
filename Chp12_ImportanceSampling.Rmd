@@ -1,0 +1,109 @@
+---
+title: "Importance Sampling"
+author: "Qihun Yang"
+date: "2023-04-14"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Ex 1
+( 1 )
+true value of the integral:
+$$I=\frac{\sqrt{2}}{2}(e^{-\frac{9}{4}}+e^{-9})\approx0.07461577$$
+```{r 3.4.0}
+tr = (exp(-9/4)+exp(-9))*sqrt(2)/2;tr
+```
+
+
+( 3 )
+```{r 3.4.1}
+set.seed(1)
+n = 1000
+h4 <- function(x){
+  exp(-0.5*(x-3)^2)+exp(-0.5*(x-6)^2)
+}
+```
+
+This problem can be solved via general importance sampling or importance sampling concerning composition sampling technique:
+
+-General Importance Sampling
+```{r 3.4.2}
+curve(h4,0,10)
+```
+From the curve of $h(x)$, I use the pdf of $N(4.5,4)$, which looks like this:
+```{r 3.4.3}
+norm4.5 <- function(x){
+  return((1/(2*sqrt(2*pi)))*exp(-0.125*(x-4.5)^2))
+}
+curve(h4,0,10)
+curve(norm4.5,add = TRUE)
+```
+This curve by and large fits $h(x)$.
+```{r 3.4.4}
+set.seed(1)
+x4 <- rnorm(n,4.5,2)
+X4 <- (dnorm(x4)*h4(x4))/norm4.5(x4)
+I6 <- mean(X4);I6
+e1 = 1.96*sqrt(mean((X4-tr)^2))/sqrt(n);e1
+```
+
+-Importance Sampling concerning composition sampling technique
+$h(x)$ is very much like the mixture of pdfs of two distribution, $N(3,1)$ and $N(6,1)$. So I use:
+$$g(x) \propto h(x)$$
+The integral of $h(x)$ is:
+\begin{aligned}
+I&=\int_{-\infty}^{\infty}\exp \left(-\frac{1}{2}(x-3)^{2}\right)+\exp \left(-\frac{1}{2}(x-6)^{2}\right) dx \\
+&=2\sqrt{2\pi} \\
+&\approx5.013257
+\end{aligned}
+
+So $$g(x)=\frac{0.5}{\sqrt{2\pi}}\exp \left(-\frac{1}{2}(x-3)^{2}\right)+\frac{0.5}{\sqrt{2\pi}}\exp \left(-\frac{1}{2}(x-6)^{2}\right)$$
+```{r 3.4.5}
+g4 <- function(x){
+  return(0.5/(sqrt(2*pi))*exp(-0.5*(x-3)^2)+0.5/(sqrt(2*pi))*exp(-0.5*(x-6)^2))
+}
+```
+Sample $g(x)$ using the composition sampling technique:
+```{r 3.4.6}
+set.seed(1)
+x4 <- c()
+for (i in 1:n) {
+  u <- runif(1,0,1)
+  if(u<0.5){
+    x4[i] <- rnorm(1,3,1)
+  }else{
+    x4[i] <- rnorm(1,6,1)
+  }
+}
+X4 <- (dnorm(x4)*h4(x4))/g4(x4)
+I6 <- mean(X4);I6
+#Error bounds at 95% confidence level
+e2 = 1.96*sqrt(mean((X4-tr)^2))/sqrt(n);e2
+```
+From error bounds, the second method is considered better.
+
+## Ex 2
+( 1 )
+
+Suppose that generating $N$ standard normal random numbers can guarantee at least 1 number greater than 4.5 on average, that is:
+$$E(n)=\theta N\geq1$$
+$$N\geq294290.75$$
+meaning that $N$ should be at least $294291$ to guarantee.
+
+( 2 )
+
+Estimating $\theta=P(X>4.5)=3.398 \times 10^{-6}$ is equivalent to calculate the integral:
+$$I=\frac{1}{\sqrt{2\pi}}\int_{4.5}^{+\infty} e^{-\frac{1}{2}x^2}dx$$
+```{r 3.5.1}
+set.seed(1)
+n = 1000
+x5 <- -log(runif(n,0,1))+4.5
+X5 <- dnorm(x5)/exp(-(x5-4.5))
+theta <- mean(X5);theta
+#Error bounds at 95% confidence level
+e = 1.96*sqrt(mean((X5-3.398*10^(-6))^2))/sqrt(n);e
+```
+Note that the pdf of $W$ is $p_W(x)=e^{-(x-5)}$.

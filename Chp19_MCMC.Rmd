@@ -1,0 +1,224 @@
+---
+title: "Chp19_MCMC"
+author: "Qihun Yang"
+date: "2023-06-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Ex 2
+define funcions
+```{r}
+neighbour <- function(n,a,draw){
+  nghbr = matrix(ncol=2)
+  for (i in 1:(n-1)) {
+    for (j in (i+1):n) {
+      draw_tmp = draw
+      temp = draw_tmp[i]
+      draw_tmp[i] = draw_tmp[j]
+      draw_tmp[j] = temp
+      if(sum((1:n)*draw_tmp)>a){
+        nghbr = rbind(nghbr,c(i,j))
+      }
+    }
+  }
+  return(nghbr)
+}
+MH <- function(N,n,a,start){
+  if(!(sum((1:n)*start)>a)){stop("starting point error!")}
+  count = 1
+  result = matrix(start,nrow = 1)
+  while (count<N){
+    nb = neighbour(n,a,result[count,])
+    p = runif(1,0,1)
+    Nx = nrow(nb)
+    index = as.numeric(nb[round(p*Nx),])
+    draw_tmp = result[count,]
+    temp = draw_tmp[index[1]]
+    draw_tmp[index[1]] = draw_tmp[index[2]]
+    draw_tmp[index[2]] = temp
+    Ny = nrow(neighbour(n,a,draw_tmp))
+    pi_ratio = Nx/Ny
+    if( pi_ratio>=1 | runif(1,0,1)<pi_ratio){
+      count = count+1
+      result = rbind(result,draw_tmp)
+      
+    }
+  }
+  return(result)
+}
+```
+main function to do the sampling
+```{r}
+set.seed(1)
+N = 10
+n = 100
+a = 10000
+start = sample(1:n)
+# find a feasible starting point
+while (sum((1:n)*start)<=a) {
+  start = sample(1:n)
+}
+MH(N,n,a,start)
+```
+
+## Ex 3
+```{r}
+N = 10000
+MH <- function(N,start,x){
+  if(start<=0 | start>=0.5){stop("starting point error!")}
+  count = 1
+  result = c(start)
+  while (count<N){
+    new = runif(1,0,0.5)
+    pi_ratio = (((1-new)/(1-result[count]))^x[2]*((1-2*new)/(1-2*result[count]))^x[3]*(new/result[count])^(x[4]+x[5]))
+    if( pi_ratio>=1 | runif(1,0,1)<pi_ratio){
+      count = count+1
+      result[count] = new    
+    }
+  }
+  return(result)
+}
+x = c(82, 72, 45, 34, 17)
+r=MH(N,0.25,x)
+mavg <- function(x){
+  n = length(x)
+  avg = c()
+  s = 0
+  for (i in 1:n) {
+    s = s + x[i]
+    avg[i] = s/i
+  }
+  return(avg)
+}
+avg = mavg(r)
+plot(1:N,avg)
+```
+
+It can be seen from the covergence pattern that burnin can be set to $4000$, and $N=8000$ is enough.
+```{r}
+nburn <- 4000
+nsave <- 4000
+MH <- function(nburn,nsave,start,x){
+  N = nburn + nsave
+  if(start<=0 | start>=0.5){stop("starting point error!")}
+  count = 1
+  result = c(start)
+  while (count<N){
+    new = runif(1,0,0.5)
+    pi_ratio = (((1-new)/(1-result[count]))^x[2]*((1-2*new)/(1-2*result[count]))^x[3]*(new/result[count])^(x[4]+x[5]))
+    if( pi_ratio>1 | runif(1,0,1)<pi_ratio){
+      count = count+1
+      result[count] = new    
+    }
+  }
+  return(result[-1:-nburn])
+}
+r=MH(4000,4000,0.25,x)
+avg = mavg(r)
+plot(1:4000,avg)
+est = mean(r);est
+```
+Now, I try different starting points and compare the errors.
+```{r}
+beta0 = seq(0.05,0.45,0.05)
+est = c()
+sd  = c()
+m = c()
+s = 40
+r = 100
+for (i in 1:length(beta0)) {
+  result=MH(4000,4000,beta0[i],x)
+  est[i] = mean(result)
+  for (j in 1:s) {
+    m[j] = mean(result[((j-1)*r+1):(j*r)])
+  }
+  sd[i] = sum((m-mean(m))^2)/(s-1)
+}
+est
+sd
+```
+The estimation and error do not show a significant difference between different starting points.
+
+## Ex 5
+```{r}
+set.seed(1)
+n = 50
+mu = 1
+N = 10
+dIsing <- function(x,mu,Z=1){
+  return(exp(sum(mu*x[-length(x)]*x[-1]))/Z)
+}
+#Gibbs
+start = rbinom(n,1,0.5)
+start = replace(start,start==0,-1)
+result = matrix(start,nrow=1)
+for (i in 2:N) {
+  result = rbind(result,result[i-1,])
+  for (j in 1:n) {
+    temp1 = temp2 = result[i,]
+    temp1[j] = -1
+    temp2[j] = 1
+    s = dIsing(temp1,1) + dIsing(temp2,1)
+    p1 = dIsing(temp1,1)/s
+    if(runif(1)<p1){
+      result[i,] = temp1
+    }else{
+      result[i,] = temp2
+    }
+  }
+}
+result
+```
+
+## Ex 7
+```{r}
+set.seed(1)
+N = 10000
+n = 20
+alpha = beta = 0.5
+#Gibbs
+start = c(1,0.5)
+result = matrix(start,nrow=1)
+for (i in 2:N) {
+  result = rbind(result,result[i-1,])
+  result[i,1] = rbinom(1,n,result[i,2])
+  result[i,2] = rbeta(1,result[i,1]+alpha, n-result[i,1]+beta)
+}
+hist(result[,2],xlab = "Histogram of MCMC draws")
+curve(dbeta(x, alpha, beta), from = 0, to = 1, col = "red", 
+      lwd = 2, main = "Density Curve of Beta(0.5,0.5)")
+```
+
+## Ex 8
+Since pdf of y conditional on x and pdf of x conditional on y are similar to exponential distribution, I can sample them via a exponential distribution with $\lambda=x$ and $\lambda=y$ restricting the acceptance field to be $(0,B)$.
+```{r}
+set.seed(1)
+B = 2
+N = 10000
+#Gibbs
+start = c(1.5,1.5)
+result = matrix(start,nrow=1)
+for (i in 2:N) {
+  result = rbind(result,result[i-1,])
+  repeat{
+    t = rexp(1,result[i,2])
+    if(t<B){
+      result[i,1] = t
+      break
+    }
+  }
+  repeat{
+    t = rexp(1,result[i,2])
+    if(t<B){
+      result[i,2] = t
+      break
+    }
+  }
+}
+est = mean(result[,1]);est
+cor(result[,1],result[,2])
+```

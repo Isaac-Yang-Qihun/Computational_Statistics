@@ -1,0 +1,64 @@
+---
+title: "Chp14_VarReductionTechs"
+author: "Qihun Yang"
+date: "2023-05-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Ex 1
++ Method 1: Mean method
+```{r 3.9.1}
+h <- function(x,y){
+  return(exp((x+y)^2))
+}
+
+n = 100000
+set.seed(1)
+I <- c()
+for (i in 1:n) {
+  temp <- runif(2,0,1)
+  I[i] <- h(temp[1],temp[2])
+}
+
+#estimation of I
+est1 = mean(I);est1
+#variance of I
+v1 = var(I);v1
+```
+```{r 3.9.2}
+h <- function(x,y){
+  return(exp((x+y)^2))
+}
+
+n = 100000
+set.seed(1)
+I <- c()
+for (i in 1:n) {
+  temp <- runif(2,0,1)
+  I[i] <- (h(temp[1],temp[2]) + h(1-temp[1],1-temp[2]))/2
+}
+
+#estimation of I
+est2 = mean(I);est2
+#variance of I
+v2 = var(I);v2
+```
+
++ Method 2: Importance Sampling
+We adopt importance sampling and set $\tilde{g}(x,y)=1+(x+y)^2$ according to its taylor expansion.
+
+Intergral of $\tilde{g}(x,y)=1+(x+y)^2$:
+$$
+\int_0^1 \int_0^1 1+(x+y)^2 \mathrm{~d} y \mathrm{~d} x\\
+=\int_0^1 1+\frac{(x+1)^3-x^3}{3} \mathrm{~d} x\\
+=1+\frac{2^4-1^4-(1^4-0^4)}{12} \mathrm{~d} x\\
+=\frac{13}{6}
+$$
+
+Then let $g(x,y)=\frac{6+6(x+y)^2}{13}$. But the method to generate random numbers is unclear.
+
+
